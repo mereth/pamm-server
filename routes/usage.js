@@ -7,7 +7,7 @@ var validActions = { "install" : true, "uninstall" : true, "update" : true };
 router.get('/', function(req, res) {
     var db = req.database;
 
-    db.collection('download').aggregate([
+    db.collection('usage').aggregate([
         { $group: { _id: "$identifier", total: { $sum: 1 } } },
     ]
     , function(err, result) {
@@ -44,7 +44,7 @@ router.post('/', function(req, res) {
         ,ip: req.ip
     };
     
-    db.collection('downloads').insert(document, function(err, result) {
+    db.collection('usage').insert(document, function(err, result) {
         if(err) throw err;
         res.send();
     });
