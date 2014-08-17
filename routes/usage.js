@@ -1,6 +1,8 @@
 var express = require('express');
 var router = express.Router();
 
+var validActions = { "install" : true, "uninstall" : true, "update" : true };
+
 /* GET usage listing */
 router.get('/', function(req, res) {
     var db = req.database;
@@ -31,8 +33,12 @@ router.post('/', function(req, res) {
     var identifier = req.body.identifier;
     if(!identifier) throw new Error("Missing identifier parameter");
     
+    var action = (req.body.action || "install");
+    if(!validActions[action]) throw new Error("Invalid action parameter");
+    
     var document = {
         identifier: identifier
+        ,action: action
         ,date: new Date()
         ,agent: req.get('User-Agent')
         ,ip: req.ip
