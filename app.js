@@ -17,6 +17,8 @@ var devmode = (app.get('env') === 'development');
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
+app.enable('trust proxy');
+
 app.use(favicon());
 app.use(logger('dev'));
 app.use(bodyParser.json());
