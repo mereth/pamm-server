@@ -8,22 +8,13 @@ router.get('/', function(req, res) {
     var db = req.database;
 
     db.collection('usage').aggregate([
+        { $match: { action: { $in : ["install", "update"] } } },
         { $group: { _id: "$identifier", total: { $sum: 1 } } },
     ]
     , function(err, result) {
         if(err) throw err;
         res.send(result);
     });
-    
-    // var collection = db
-    // .collection('downloads.view')
-    // .find({})
-    // .toArray(function(err, docs) {
-        // if(err) throw err;
-        // var json = JSON.stringify(docs);
-        // self.cache_put('/api/v1/modcount', json)
-        // res.send(json);
-    // });
 });
 
 /* POST add usage entry */
