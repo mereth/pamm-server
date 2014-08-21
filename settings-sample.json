@@ -1,0 +1,6 @@
+{
+    "cookie_secret": "chocolate",
+    "github_client_id": "application client id",
+    "github_client_secret": "application client secret",
+    "github_callback_url": "http://localhost:8080/auth/github/callback"
+}
