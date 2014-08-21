@@ -16,7 +16,7 @@ var bodyParser = require('body-parser');
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
-var usage = require('./routes/usage');
+var apiUsage = require('./routes/api-usage');
 
 var app = express();
 
@@ -87,7 +87,7 @@ mongodb.connect(mongodburl, function(err, database) {
     
     app.use('/', routes);
     app.use('/users', users);
-    app.use('/api/usage', usage);
+    app.use('/api/usage', apiUsage);
     
     // catch 404 and forward to error handler
     app.use(function(req, res, next) {
