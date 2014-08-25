@@ -25,7 +25,8 @@ var serverip = (process.env.OPENSHIFT_NODEJS_IP || "127.0.0.1");
 var serverport = (process.env.OPENSHIFT_NODEJS_PORT || 8080);
 var mongodburl = (process.env.OPENSHIFT_MONGODB_DB_URL || 'mongodb://localhost/') + 'pamm';
 
-var settings = JSON.parse(fs.readFileSync('settings.json', { encoding: 'utf8' }));
+var settingsfile = path.join((process.env.OPENSHIFT_DATA_DIR || __dirname), 'settings.json');
+var settings = JSON.parse(fs.readFileSync(settingsfile, { encoding: 'utf8' }));
 
 mongodb.connect(mongodburl, function(err, database) {
     if(err) throw err;
