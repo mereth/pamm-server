@@ -123,6 +123,8 @@ mongodb.connect(mongodburl, function(err, database) {
         });
     });
     
+    apiUsage.init(database);
+    
     var server = app.listen(serverport, serverip, function() {
         debug('Express server listening on ' + server.address().address + ':' + server.address().port);
     });

@@ -4,32 +4,15 @@ var router = express.Router();
 var db;
 var validActions = { "install" : true, "uninstall" : true, "update" : true };
 
-var cache = {};
-var cacheTTL = 0;
+var usageCache = {};
 
 /* GET usage listing */
 router.get('/', function(req, res) {
-    db = req.database;
-    
-    var now = process.hrtime()[0];
-    if(now < cacheTTL) {
-        res.send(cache);
-        return;
-    }
-    
-    getUsageStatistics(function(err, result) {
-        if(err) throw err;
-        
-        cache = result;
-        cacheTTL = now + 600;
-        res.send(result);
-    });
+    res.send(usageCache);
 });
 
 /* POST add usage entry */
 router.post('/', function(req, res) {
-    db = req.database;
-    
     var identifier = req.body.identifier;
     if(!identifier) throw new Error("Missing identifier parameter");
     
@@ -50,7 +33,7 @@ router.post('/', function(req, res) {
     });
 });
 
-var getUsageStatistics = function(done) {
+var getUsageStatistics = function() {
     getUsageTotal(function(err, usagetotal) {
         if(err) {
             done(err);
@@ -92,8 +75,8 @@ var getUsageStatistics = function(done) {
                     
                     result.push(total);
                 }
-            
-                done(null, result);
+                
+                usageCache = result;
             });
         });
     });
@@ -136,5 +119,15 @@ var getUsagePopularity = function(done) {
         done
     );
 }
+
+router.init = function init(database) {
+    db = database;
+    getUsageStatistics();
+};
+
+setInterval(function() {
+    getUsageStatistics();
+}, 900000); // refresh every 15mn
+
 
 module.exports = router;
