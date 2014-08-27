@@ -18,19 +18,31 @@ var routes = require('./routes/index');
 var users = require('./routes/users');
 var apiUsage = require('./routes/api-usage');
 
-var app = express();
-
-var devmode = (app.get('env') === 'development');
 var serverip = (process.env.OPENSHIFT_NODEJS_IP || "127.0.0.1");
 var serverport = (process.env.OPENSHIFT_NODEJS_PORT || 8080);
 var mongodburl = (process.env.OPENSHIFT_MONGODB_DB_URL || 'mongodb://localhost/') + 'pamm';
 
-var settingsfile = path.join((process.env.OPENSHIFT_DATA_DIR || __dirname), 'settings.json');
-var settings = JSON.parse(fs.readFileSync(settingsfile, { encoding: 'utf8' }));
+var database;
+var settings;
 
-mongodb.connect(mongodburl, function(err, database) {
-    if(err) throw err;
+var initialize = function(done) {
+    mongodb.connect(mongodburl, function(err, db) {
+        if(err) throw err;
+        
+        database = db;
+        db.collection('settings').findOne(function(err, result) {
+            if(err) throw err;
+            
+            settings = result;
+            done();
+        });
+    });
+}
+
+var start = function() {
+    var app = express();
     
+    var devmode = (app.get('env') === 'development');
     var sessionStore = new MongoStore({ db: database });
     
     // view engine setup
@@ -128,4 +140,6 @@ mongodb.connect(mongodburl, function(err, database) {
     var server = app.listen(serverport, serverip, function() {
         debug('Express server listening on ' + server.address().address + ':' + server.address().port);
     });
-});
+};
+
+initialize(start);
