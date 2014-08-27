@@ -60,7 +60,7 @@ var start = function() {
     app.use(require('stylus').middleware(path.join(__dirname, 'public')));
     app.use(express.static(path.join(__dirname, 'public')));
     
-    app.use(session({ name: 'pamm-server', secret: settings.cookie_secret, resave: true, saveUninitialized: true, store: sessionStore }));
+    //app.use(session({ name: 'pamm-server', secret: settings.cookie_secret, resave: false, saveUninitialized: false, store: sessionStore }));
     app.use(passport.initialize());
     app.use(passport.session());
     
