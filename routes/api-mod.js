@@ -49,7 +49,7 @@ router.get('/', function(req, res) {
     })
 });
 
-router.post('/', ensureAuthenticated, function(req, res) {
+router.post('/', ensureAuthenticated, function(req, res, next) {
     db = req.database;
     
     var url = req.body.modurl;
@@ -61,17 +61,23 @@ router.post('/', ensureAuthenticated, function(req, res) {
     if(url) {
         checkorg(req, function() {
             download(url, function(err, data) {
-                var ticket = crypto.randomBytes(10).toString('hex');
-                var modinfos = extract(data);
+                if(err) return next(err);
                 
-                analyze(req, modinfos, function(err, data) {
-                    var submission = {
-                        ticket: ticket,
-                        url: url,
-                        mods: modinfos
-                    };
-                    req.session.submission = submission;
-                    res.send(submission);
+                var ticket = crypto.randomBytes(10).toString('hex');
+                extract(data, function(err, modinfos) {
+                    if(err) return next(err);
+                    
+                    analyze(req, modinfos, function(err, data) {
+                        if(err) return next(err);
+                        
+                        var submission = {
+                            ticket: ticket,
+                            url: url,
+                            mods: modinfos
+                        };
+                        req.session.submission = submission;
+                        res.send(submission);
+                    });
                 });
             });
         });
@@ -91,7 +97,7 @@ router.post('/', ensureAuthenticated, function(req, res) {
         modinfo.owner = req.user._id;
         
         publish(modinfo, function(err) {
-            if(err) throw err;
+            if(err) return next(err);
             analyze(req, submission.mods, function(err) {
                 res.send(submission);
             });
@@ -137,26 +143,31 @@ var download = function(url, done) {
     });
 };
 
-var extract = function(zipdata) {
-    var zip = new JSZip(zipdata);
-    
-    // zip.folders not reliable, some directories are not detected as directory (eg. instant_sandbox zip)
-    
-    // digging modinfo files
-    modinfofiles = _.filter(zip.files, function(file) {
-        var filepath = file.name;
-        return path.basename(filepath) === 'modinfo.json'
-    });
-    
-    var modinfos = [];
-    
-    _.forEach(modinfofiles, function(modinfofile) {
-        var modinfo = JSON.parse(modinfofile.asText());
-        modinfo.path = modinfofile.name;
-        modinfos.push(modinfo);
-    });
-    
-    return modinfos;
+var extract = function(zipdata, done) {
+    try {
+        var zip = new JSZip(zipdata);
+        
+        // zip.folders not reliable, some directories are not detected as directory (eg. instant_sandbox zip)
+        
+        // digging modinfo files
+        modinfofiles = _.filter(zip.files, function(file) {
+            var filepath = file.name;
+            return path.basename(filepath) === 'modinfo.json'
+        });
+        
+        var modinfos = [];
+        
+        _.forEach(modinfofiles, function(modinfofile) {
+            var modinfo = JSON.parse(modinfofile.asText());
+            modinfo.path = modinfofile.name;
+            modinfos.push(modinfo);
+        });
+        
+        done(null, modinfos);
+    }
+    catch(err) {
+        done(err);
+    }
 };
 
 var analyze = function(req, modinfos, done) {
