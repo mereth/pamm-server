@@ -1,0 +1,42 @@
+extends layout
+
+block content
+    h1= title
+    
+    p
+        .input-group
+            .input-group-addon
+                span(class='glyphicon glyphicon-globe')
+            input(class='form-control', data-bind='value: url, attr: { readonly: ticket() }')
+    
+    p
+        button(class="btn btn-default btn-lg" data-bind='click: submit, visible: !ticket(), enable: !submitting()')
+            span(class='glyphicon glyphicon-asterisk')
+            span  Submit
+        span  
+        img(src='/images/loading.gif' data-bind='visible: submitting()')
+    
+    p
+        table(class='table' data-bind='visible: mods() && mods().length > 0')
+            thead
+                tr
+                    th path
+                    th identifier
+                    th version
+                    th name
+                    th status
+                    th action
+            tbody(data-bind='foreach: mods')
+                tr
+                    td(data-bind='text: path')
+                    td(data-bind='text: identifier')
+                    td(data-bind='text: version')
+                    td(data-bind='text: display_name')
+                    td(data-bind='text: statusDisplay()')
+                    td
+                        button(class="btn btn-default btn-xs" data-bind='click: publish, visible: status === "new" || status === "update"')
+                            span(class='glyphicon glyphicon-upload')
+                            span  Publish
+    
+    script
+        include ../public/javascripts/mod.js

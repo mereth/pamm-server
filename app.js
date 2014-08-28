@@ -16,6 +16,7 @@ var bodyParser = require('body-parser');
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
+var apiMod = require('./routes/api-mod');
 var apiUsage = require('./routes/api-usage');
 
 var serverip = (process.env.OPENSHIFT_NODEJS_IP || "127.0.0.1");
@@ -61,6 +62,19 @@ var start = function() {
     app.use(express.static(path.join(__dirname, 'public')));
     
     //app.use(session({ name: 'pamm-server', secret: settings.cookie_secret, resave: false, saveUninitialized: false, store: sessionStore }));
+    var ss = session({ name: 'pamm-server', secret: settings.cookie_secret, resave: false, saveUninitialized: false, store: sessionStore });
+    app.use(function(req,res,next){
+        if(req.path.indexOf('/api/usage') === 0) {
+            next();
+        }
+        else if(req.path.indexOf('/api/mod') === 0 && req.method === "GET") {
+            next();
+        }
+        else {
+            ss(req,res,next);
+        }
+    });
+    
     app.use(passport.initialize());
     app.use(passport.session());
     
@@ -87,12 +101,12 @@ var start = function() {
         });
     }));
     
-    app.get('/login', passport.authenticate('github', { scope: 'read:org' }));
+    app.get('/auth/login', passport.authenticate('github', { scope: 'read:org' }));
     app.get('/auth/github/callback', passport.authenticate('github', { failureRedirect: '/error' }), function(req, res) {
         // Successful authentication, redirect home.
-        res.redirect('/');
+        res.redirect('/mod');
     });
-    app.get('/logout', function(req, res){
+    app.get('/auth/logout', function(req, res){
         req.logout();
         res.redirect('/');
     });
@@ -100,6 +114,7 @@ var start = function() {
     
     app.use('/', routes);
     app.use('/users', users);
+    app.use('/api/mod', apiMod);
     app.use('/api/usage', apiUsage);
     
     // catch 404 and forward to error handler
