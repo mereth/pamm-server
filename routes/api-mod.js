@@ -187,7 +187,11 @@ var analyze = function(req, modinfos, done) {
             }
             
             if(!mod) {
-                modinfo.status = 'new'
+                modinfo.status = 'new';
+                if(modinfo.identifier.indexOf('com.uberent.pa.mods.stockmods.') === 0) {
+                    modinfo.status = 'invalid';
+                    modinfo.error = 'Reserved identifier prefix: com.uberent.pa.mods.stockmods';
+                }
             }
             else if(modinfo.version === mod.version) {
                 modinfo.status = 'published'
