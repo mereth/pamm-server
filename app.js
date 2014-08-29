@@ -70,6 +70,10 @@ var start = function() {
         else if(req.path.indexOf('/api/mod') === 0 && req.method === "GET") {
             next();
         }
+        else if(!req.get('User-Agent')) {
+            // reduce the number of useless session for each haproxy call
+            next();
+        }
         else {
             ss(req,res,next);
         }
