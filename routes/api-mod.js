@@ -213,6 +213,16 @@ var analyze = function(req, modinfos, done) {
 var publish = function(modinfo, done) {
     modinfo._id = modinfo.identifier;
     db.collection('mods').save(modinfo, function(err) {
+        db.collection('events').insert({
+            date: new Date(),
+            event: 'mod-publish',
+            user: modinfo.owner,
+            mod: {
+                identifier: modinfo.identifier,
+                version: modinfo.version
+            }
+        }, function() { /*dont care*/ });
+        
         done(err);
     });
 }
