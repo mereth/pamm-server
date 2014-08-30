@@ -67,7 +67,7 @@ router.post('/', ensureAuthenticated, function(req, res, next) {
                 extract(data, function(err, modinfos) {
                     if(err) return next(err);
                     
-                    analyze(req, modinfos, function(err, data) {
+                    analyze(req, modinfos, function(err) {
                         if(err) return next(err);
                         
                         var submission = {
@@ -88,17 +88,25 @@ router.post('/', ensureAuthenticated, function(req, res, next) {
         if(submission.ticket !== ticket)
             throw new Error("Invalid ticket provided.");
         
-        var modinfo = _.find(submission.mods, function(modinfo) {
-            return (modinfo.identifier === identifier)
-        });
-        
-        modinfo = _.pick(modinfo, properties);
-        modinfo.url = submission.url;
-        modinfo.owner = req.user._id;
-        
-        publish(modinfo, function(err) {
+        analyze(req, submission.mods, function(err) {
             if(err) return next(err);
-            analyze(req, submission.mods, function(err) {
+            
+            var modinfo = _.find(submission.mods, function(modinfo) {
+                return (modinfo.identifier === identifier)
+            });
+            
+            if(modinfo.status !== "new" && modinfo.status !== "update") {
+                return next(new Error("Invalid mod status: " + modinfo.status));
+            }
+            
+            var cleanModinfo = _.pick(modinfo, properties);
+            cleanModinfo.url = submission.url;
+            cleanModinfo.owner = req.user._id;
+            
+            publish(cleanModinfo, function(err) {
+                if(err) return next(err);
+                
+                modinfo.status = "published";
                 res.send(submission);
             });
         });
@@ -175,7 +183,7 @@ var analyze = function(req, modinfos, done) {
     var orgmember = req.session.orgmember;
     var identifiers = _.pluck(modinfos, 'identifier');
     db.collection('mods').find({ _id: { '$in': identifiers } }).toArray(function(err, mods) {
-        if(err) return done(err, null);
+        if(err) return done(err);
         
         mods = _.indexBy(mods, 'identifier');
         
@@ -185,6 +193,9 @@ var analyze = function(req, modinfos, done) {
             if(mod) {
                 modinfo.dbversion = mod.version;
             }
+            
+            if(modinfo.error)
+                modinfo.error = "";
             
             if(!mod) {
                 modinfo.status = 'new';
@@ -206,7 +217,7 @@ var analyze = function(req, modinfos, done) {
             }
         });
         
-        done(null, modinfos);
+        done();
     });
 }
 
