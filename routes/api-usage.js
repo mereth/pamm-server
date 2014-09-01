@@ -34,17 +34,15 @@ router.post('/', function(req, res) {
 });
 
 var getUsageStatistics = function() {
+    var onerror = function(err) {
+        console.log('# getUsageStatistics: ' + err );
+    };
+    
     getUsageTotal(function(err, usagetotal) {
-        if(err) {
-            done(err);
-            return;
-        }
+        if(err) return onerror(err);
         
         getUsagePopularity(function(err, usagepop) {
-            if(err) {
-                done(err);
-                return;
-            }
+            if(err) return onerror(err);
             
             var mappop = {};
             var minIndice = 0;
