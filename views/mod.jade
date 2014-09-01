@@ -8,38 +8,64 @@ block content
             .input-group-addon
                 span(class='glyphicon glyphicon-globe')
             input(class='form-control', data-bind='value: url, attr: { readonly: ticket() }' placeholder='eg.: https://github.com/username/mymod/archive/v1.8.zip')
-    
+
     p
         button(class="btn btn-default btn-lg" data-bind='click: submit, visible: !ticket(), enable: !submitting()')
             span(class='glyphicon glyphicon-asterisk')
             span  Submit
         span  
         img(src='/images/loading.gif' data-bind='visible: submitting()')
-    
+
     p
-        div(class="alert alert-danger" data-bind='text: error, visible: error()')
-    
-    p
-        table(class='table' data-bind='visible: mods() && mods().length > 0')
-            thead
-                tr
-                    th path
-                    th identifier
-                    th version
-                    th name
-                    th status
-                    th action
-            tbody(data-bind='foreach: mods')
-                tr
-                    td(data-bind='text: path')
-                    td(data-bind='text: identifier')
-                    td(data-bind='text: version')
-                    td(data-bind='text: display_name')
-                    td(data-bind='text: statusDisplay()')
-                    td
-                        button(class="btn btn-default btn-xs" data-bind='click: publish, visible: status === "new" || status === "update"')
-                            span(class='glyphicon glyphicon-upload')
-                            span  Publish
+        .alert.alert-warning(data-bind='visible: isPamodsUrl()') Storing your mod archive on pamods.github.io is highly discouraged.
+        .alert.alert-danger(data-bind='text: error, visible: error()')
+
+    div(data-bind='foreach: mods')
+        .row.mod
+            .col-lg-3.col-md-3.mod-left
+                img.mod-icon(data-bind='attr: { src: ($data.icon ? $data.icon : "/images/generic.png") }')
+                span.mod-context(class='label label-default' data-bind='text: $data.context')
+                br
+                span.mod-status(class='label' data-bind='text: $data.statusDisplay(), css: {\
+                    "label-success": (status == "new" || status == "update")\
+                   ,"label-primary": (status == "published")\
+                   ,"label-danger": (status == "invalid" || status == "unauthorized")\
+                }')
+            .col-lg-7.col-md-7
+                .row
+                    .col-lg-12
+                        span.mod-name(data-bind='text: $data.display_name')
+                        span.mod-author(data-bind='text: " by " + $data.author')
+                .row
+                    .col-lg-12
+                        var.mod-identifier(data-bind='text: $data.identifier')
+                        span.mod-path(data-bind='text: " (" + $data.path + ")"')
+                .row
+                    .col-lg-12
+                        span.mod-version(data-bind='text: "version: " + $data.version')
+                        span.mod-build(data-bind='text: ", build: " + $data.build, visible: $data.build')
+                        span.mod-date(data-bind='text: ", date: " + $data.date, visible: $data.date')
+                .row
+                    .col-lg-12
+                        span.mod-description(data-bind='text: $data.description')
+                .row
+                    .col-lg-12
+                        span.mod-categories(data-bind='text: categoriesDisplay()')
+                .row.mod-links(data-bind='visible: $data.forum')
+                    .col-lg-12
+                        span [
+                        a.mod-forum(data-bind='attr: { href: $data.forum }, visible: $data.forum') forum
+                        span ]
+                
+                div.alerts-warning(data-bind='foreach: $data.warnings')
+                    .alert.alert-warning(data-bind='html: $data')
+                div.alerts-error(data-bind='foreach: $data.errors')
+                    .alert.alert-danger(data-bind='html: $data')
+                    
+            .col-lg-2.col-md-2
+                button(class="btn btn-default" data-bind='click: publish, visible: status === "new" || status === "update"')
+                    .glyphicon.glyphicon-plus
+                    span  Publish
     
     script
         include ../public/javascripts/mod.js

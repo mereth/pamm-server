@@ -1,6 +1,6 @@
 $(function() {
     var model = {
-        url: ko.observable(),
+        url: ko.observable(''),
         ticket: ko.observable(),
         mods: ko.observableArray(),
         
@@ -15,8 +15,9 @@ $(function() {
                 mapdata(data);
             })
             .fail(function(jqXHR, textStatus, errorThrown) {
+                var error;
                 try {
-                    var error = JSON.parse(jqXHR.responseText);
+                    error = JSON.parse(jqXHR.responseText);
                 }
                 catch(e) {}
                 
@@ -29,13 +30,20 @@ $(function() {
                 self.submitting(false);
             });;
         }
-    }
+    };
+    
+    model.isPamodsUrl = ko.computed(function() {
+        return model.url().indexOf('http://pamods.github.io') === 0;
+    });
     
     var mapdata = function(data) {
         model.ticket(data.ticket);
         model.mods.removeAll();
         for(var i=0; i<data.mods.length; ++i) {
             var mod = data.mods[i];
+            mod.categoriesDisplay = function() {
+                return mod.category ? mod.category.join(', ').toUpperCase() : '';
+            };
             mod.statusDisplay = function() {
                 return this.status + (this.status === "update" ? " (" + this.dbversion + ")" : "")
             };
@@ -44,8 +52,9 @@ $(function() {
                     mapdata(data);
                 })
                 .fail(function(jqXHR, textStatus, errorThrown) {
+                    var error;
                     try {
-                        var error = JSON.parse(jqXHR.responseText);
+                        error = JSON.parse(jqXHR.responseText);
                     }
                     catch(e) {}
                     

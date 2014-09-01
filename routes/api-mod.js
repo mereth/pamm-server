@@ -182,6 +182,7 @@ var analyze = function(req, modinfos, done) {
     var user = req.user;
     var orgmember = req.session.orgmember;
     var identifiers = _.pluck(modinfos, 'identifier');
+    
     db.collection('mods').find({ _id: { '$in': identifiers } }).toArray(function(err, mods) {
         if(err) return done(err);
         
@@ -194,14 +195,14 @@ var analyze = function(req, modinfos, done) {
                 modinfo.dbversion = mod.version;
             }
             
-            if(modinfo.error)
-                modinfo.error = "";
+            modinfo.errors = [];
+            modinfo.warnings = [];
             
             if(!mod) {
                 modinfo.status = 'new';
-                if(modinfo.identifier.indexOf('com.uberent.pa.mods.stockmods.') === 0) {
+                if(modinfo.identifier.indexOf('com.uberent.pa.mods.stockmods') === 0) {
                     modinfo.status = 'invalid';
-                    modinfo.error = 'Reserved identifier prefix: com.uberent.pa.mods.stockmods';
+                    modinfo.errors.push('Reserved identifier prefix: <var>com.uberent.pa.mods.stockmods.*</var>');
                 }
             }
             else if(modinfo.version === mod.version) {
@@ -209,10 +210,11 @@ var analyze = function(req, modinfos, done) {
             }
             else {
                 if(!orgmember && mod.owner !== user._id) {
-                    modinfo.status = 'unauthorized'
+                    modinfo.status = 'unauthorized';
+                    modinfo.errors.push('You are not authorized to update this mod, please contact a PAMM maintainer on PA forum.');
                 }
                 else {
-                    modinfo.status = 'update'
+                    modinfo.status = 'update';
                 }
             }
         });
