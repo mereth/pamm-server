@@ -45,7 +45,7 @@ $(function() {
                 return mod.category ? mod.category.join(', ').toUpperCase() : '';
             };
             mod.statusDisplay = function() {
-                return this.status + (this.status === "update" ? " (" + this.dbversion + ")" : "")
+                return this.status + (this.status === "update" ? " (" + this.dbversion + ")" : "");
             };
             mod.publish = function() {
                 $.post('/api/mod', { ticket: model.ticket, identifier: this.identifier }, function(data) {
@@ -64,10 +64,10 @@ $(function() {
                         model.error(errorThrown);
                 })
                 ;
-            }
+            };
             model.mods.push(mod);
         }
-    }
+    };
     
     ko.applyBindings(model);
 });

@@ -38,7 +38,7 @@ var initialize = function(done) {
             done();
         });
     });
-}
+};
 
 var start = function() {
     var app = express();
@@ -99,7 +99,7 @@ var start = function() {
             displayName: (profile.displayName || profile.username),
             username: profile.username,
             accessToken: accessToken
-        }
+        };
         database.collection('users').save(user, function(err) {
             done(err, profile.id);
         });
@@ -133,7 +133,7 @@ var start = function() {
         var data = {
             message: err.message,
             error: devmode ? err : {}
-        }
+        };
         
         res.status(err.status || 500);
         if(req.path.indexOf('/api/') === 0)

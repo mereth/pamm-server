@@ -46,7 +46,7 @@ router.get('/', function(req, res) {
         mods = _.sortBy(mods, ['context', 'identifier']);
         
         res.send(mods);
-    })
+    });
 });
 
 router.post('/', ensureAuthenticated, function(req, res, next) {
@@ -92,7 +92,7 @@ router.post('/', ensureAuthenticated, function(req, res, next) {
             if(err) return next(err);
             
             var modinfo = _.find(submission.mods, function(modinfo) {
-                return (modinfo.identifier === identifier)
+                return (modinfo.identifier === identifier);
             });
             
             if(modinfo.status !== "new" && modinfo.status !== "update") {
@@ -131,7 +131,7 @@ var checkorg = function(req, done) {
     
     request(options, function(error, response, body) {
         session.orgmember = false;
-        if (!error && response.statusCode == 200) {
+        if (!error && response.statusCode === 200) {
             for(var i = 0; i < body.length; ++i) {
                 var org = body[i];
                 if(org.id === 5934226) {
@@ -160,7 +160,7 @@ var extract = function(zipdata, done) {
         // digging modinfo files
         modinfofiles = _.filter(zip.files, function(file) {
             var filepath = file.name;
-            return path.basename(filepath) === 'modinfo.json'
+            return path.basename(filepath) === 'modinfo.json';
         });
         
         var modinfos = [];
@@ -206,7 +206,7 @@ var analyze = function(req, modinfos, done) {
                 }
             }
             else if(modinfo.version === mod.version) {
-                modinfo.status = 'published'
+                modinfo.status = 'published';
             }
             else {
                 if(!orgmember && mod.owner !== user._id) {
@@ -221,7 +221,7 @@ var analyze = function(req, modinfos, done) {
         
         done();
     });
-}
+};
 
 var publish = function(modinfo, done) {
     modinfo._id = modinfo.identifier;
@@ -238,11 +238,11 @@ var publish = function(modinfo, done) {
         
         done(err);
     });
-}
+};
 
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) { return next(); }
-  res.redirect('/auth/login')
+  res.redirect('/auth/login');
 }
 
 

@@ -66,7 +66,7 @@ var getUsageStatistics = function() {
                     total = {
                         identifier: total._id,
                         total: total.value
-                    }
+                    };
                     
                     var popularity = (mappop[total.identifier] || 0);
                     total.popularity = Math.round((popularity - minIndice) * popunit);
@@ -78,16 +78,16 @@ var getUsageStatistics = function() {
             });
         });
     });
-}
+};
 
 var getUsageTotal = function(done) {
     db.collection('usage').aggregate([
             { $match: { action: { $in : ["install", "update"] } } },
-            { $group: { _id: "$identifier", value: { $sum: 1 } } },
+            { $group: { _id: "$identifier", value: { $sum: 1 } } }
         ]
         , done
     );
-}
+};
 
 var getUsagePopularity = function(done) {
     var lastweek = new Date();
@@ -116,7 +116,7 @@ var getUsagePopularity = function(done) {
         },
         done
     );
-}
+};
 
 router.init = function init(database) {
     db = database;

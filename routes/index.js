@@ -13,7 +13,7 @@ router.get('/mod', ensureAuthenticated, function(req, res) {
 
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) { return next(); }
-  res.redirect('/auth/login')
+  res.redirect('/auth/login');
 }
 
 module.exports = router;
