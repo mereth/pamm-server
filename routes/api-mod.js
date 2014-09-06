@@ -36,7 +36,7 @@ var properties = [
 
 router.get('/', function(req, res) {
     db = req.database;
-    db.collection('mods').find({}).toArray(function(err, mods) {
+    db.collection('mods').find({enabled: { $ne: false }}).toArray(function(err, mods) {
         if(err) throw err;
         _.forEach(mods, function(mod) {
             delete mod._id;
@@ -54,22 +54,45 @@ router.post('/', ensureAuthenticated, function(req, res, next) {
     
     var url = req.body.modurl;
     var ticket = req.body.ticket;
+    var action = req.body.action;
     var identifier = req.body.identifier;
     
     var submission = req.session.submission;
     
     if(url) {
+        var ticket = crypto.randomBytes(10).toString('hex');
+        
         checkorg(req, function() {
-            download(url, function(err, data) {
-                if(err) return next(err);
-                
-                var ticket = crypto.randomBytes(10).toString('hex');
-                extract(data, function(err, modinfos) {
+            if(url.indexOf('http') === 0) {
+                download(url, function(err, data) {
                     if(err) return next(err);
-                    
+
+                    extract(data, function(err, modinfos) {
+                        if(err) return next(err);
+
+                        analyze(req, modinfos, function(err) {
+                            if(err) return next(err);
+
+                            var submission = {
+                                ticket: ticket,
+                                url: url,
+                                mods: modinfos
+                            };
+                            req.session.submission = submission;
+                            res.send(submission);
+                        });
+                    });
+                });
+            }
+            else {
+                var idregex = '^' + url.replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1") + '.*';
+                db.collection('mods').find({_id: { $regex: idregex }}).toArray(function(err, modinfos) {
+                    if(err) return next(err);
+                    if(!modinfos.length) return next(new Error("No mods found for this identifier."));
+
                     analyze(req, modinfos, function(err) {
                         if(err) return next(err);
-                        
+
                         var submission = {
                             ticket: ticket,
                             url: url,
@@ -79,10 +102,10 @@ router.post('/', ensureAuthenticated, function(req, res, next) {
                         res.send(submission);
                     });
                 });
-            });
+            }
         });
     }
-    else if(ticket && identifier) {
+    else if(ticket && action && identifier) {
         if(!submission)
             throw new Error("No submission found.");
         if(submission.ticket !== ticket)
@@ -95,20 +118,39 @@ router.post('/', ensureAuthenticated, function(req, res, next) {
                 return (modinfo.identifier === identifier);
             });
             
-            if(modinfo.status !== "new" && modinfo.status !== "update") {
-                return next(new Error("Invalid mod status: " + modinfo.status));
-            }
-            
-            var cleanModinfo = _.pick(modinfo, properties);
-            cleanModinfo.url = submission.url;
-            cleanModinfo.owner = req.user._id;
-            
-            publish(cleanModinfo, function(err) {
-                if(err) return next(err);
+            if(action === "publish") {
+                if(modinfo.status !== "new" && modinfo.status !== "update") {
+                    return next(new Error("Invalid mod status: " + modinfo.status));
+                }
                 
-                modinfo.status = "published";
-                res.send(submission);
-            });
+                publish(req, submission.url, modinfo, function(err) {
+                    if(err) return next(err);
+                    res.send(submission);
+                });
+            }
+            else if(action === "disable") {
+                if(modinfo.status !== "published") {
+                    return next(new Error("Invalid mod status: " + modinfo.status));
+                }
+                
+                disable(req, modinfo, function(err) {
+                    if(err) return next(err);
+                    res.send(submission);
+                });
+            }
+            else if(action === "enable") {
+                if(modinfo.status !== "disabled") {
+                    return next(new Error("Invalid mod status: " + modinfo.status));
+                }
+                
+                enable(req, modinfo, function(err) {
+                    if(err) return next(err);
+                    res.send(submission);
+                });
+            }
+            else {
+                return next(new Error("Invalid action parameter: " + action));
+            }
         });
     }
     else {
@@ -205,13 +247,18 @@ var analyze = function(req, modinfos, done) {
                     modinfo.errors.push('Reserved identifier prefix: <var>com.uberent.pa.mods.stockmods.*</var>');
                 }
             }
-            else if(modinfo.version === mod.version) {
-                modinfo.status = 'published';
+            else if(!orgmember && mod.owner !== user._id) {
+                modinfo.status = 'unauthorized';
+                modinfo.errors.push('You are not authorized to update this mod, please contact a PAMM maintainer on PA forum.');
             }
             else {
-                if(!orgmember && mod.owner !== user._id) {
-                    modinfo.status = 'unauthorized';
-                    modinfo.errors.push('You are not authorized to update this mod, please contact a PAMM maintainer on PA forum.');
+                if(modinfo.version === mod.version) {
+                    if(mod.enabled === false) {
+                        modinfo.status = 'disabled';
+                    }
+                    else {
+                        modinfo.status = 'published';
+                    }
                 }
                 else {
                     modinfo.status = 'update';
@@ -223,20 +270,64 @@ var analyze = function(req, modinfos, done) {
     });
 };
 
-var publish = function(modinfo, done) {
-    modinfo._id = modinfo.identifier;
-    db.collection('mods').save(modinfo, function(err) {
-        db.collection('events').insert({
-            date: new Date(),
-            event: 'mod-publish',
-            user: modinfo.owner,
-            mod: {
-                identifier: modinfo.identifier,
-                version: modinfo.version
-            }
-        }, function() { /*dont care*/ });
-        
-        done(err);
+var publish = function(req, url, modinfo, done) {
+    var cleanModinfo = _.pick(modinfo, properties);
+    cleanModinfo.url = url;
+    cleanModinfo.owner = req.user._id;
+    cleanModinfo._id = cleanModinfo.identifier;
+    
+    db.collection('mods').save(cleanModinfo, function(err) {
+        if(err) return done(err);
+        registerEvent(cleanModinfo, 'mod-publish');
+        modinfo.status = "published";
+        done();
+    });
+};
+
+var disable = function(req, modinfo, done) {
+    var identifier = modinfo.identifier;
+    db.collection('mods').findOne({_id: identifier}, function(err, mod) {
+        if(err) return done(err);
+        mod.owner = req.user._id;
+        mod.enabled = false;
+        db.collection('mods').save(mod, function(err) {
+            if(err) return done(err);
+            registerEvent(modinfo, 'mod-disable');
+            modinfo.status = "disabled";
+            done();
+        });
+    });
+};
+
+var enable = function(req, modinfo, done) {
+    var identifier = modinfo.identifier;
+    db.collection('mods').findOne({_id: identifier}, function(err, mod) {
+        if(err) return done(err);
+        mod.owner = req.user._id;
+        delete mod.enabled;
+        db.collection('mods').save(mod, function(err) {
+            if(err) return done(err);
+            registerEvent(modinfo, 'mod-enable');
+            modinfo.status = "published";
+            done();
+        });
+    });
+};
+
+var registerEvent = function(mod, eventname) {
+    db.collection('events').insert({
+        date: new Date(),
+        event: eventname,
+        user: mod.owner,
+        mod: {
+            identifier: mod.identifier,
+            version: mod.version
+        }
+    }
+    ,function(err) {
+        if(err) {
+            console.log('# registerEvent: ' + err);
+        }
     });
 };
 

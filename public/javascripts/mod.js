@@ -36,6 +36,25 @@ $(function() {
         return model.url().indexOf('http://pamods.github.io') === 0;
     });
     
+    var doModAction = function(action) {
+        model.error('');
+        $.post('/api/mod', { ticket: model.ticket, identifier: this.identifier, action: action }, function(data) {
+            mapdata(data);
+        })
+        .fail(function(jqXHR, textStatus, errorThrown) {
+            var error;
+            try {
+                error = JSON.parse(jqXHR.responseText);
+            }
+            catch(e) {}
+
+            if(error)
+                model.error(error.message);
+            else
+                model.error(errorThrown);
+        });
+    };
+    
     var mapdata = function(data) {
         model.ticket(data.ticket);
         model.mods.removeAll();
@@ -48,22 +67,13 @@ $(function() {
                 return this.status + (this.status === "update" ? " (" + this.dbversion + ")" : "");
             };
             mod.publish = function() {
-                $.post('/api/mod', { ticket: model.ticket, identifier: this.identifier }, function(data) {
-                    mapdata(data);
-                })
-                .fail(function(jqXHR, textStatus, errorThrown) {
-                    var error;
-                    try {
-                        error = JSON.parse(jqXHR.responseText);
-                    }
-                    catch(e) {}
-                    
-                    if(error)
-                        model.error(error.message);
-                    else
-                        model.error(errorThrown);
-                })
-                ;
+                doModAction.apply(this, ['publish']);
+            };
+            mod.disable = function() {
+                doModAction.apply(this, ['disable']);
+            };
+            mod.enable = function() {
+                doModAction.apply(this, ['enable']);
             };
             model.mods.push(mod);
         }
