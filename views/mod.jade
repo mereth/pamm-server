@@ -8,13 +8,11 @@ block content
             .input-group-addon
                 span(class='glyphicon glyphicon-globe')
             input(class='form-control', data-bind='value: url, attr: { readonly: ticket() }' placeholder='eg.: https://github.com/username/mymod/archive/v1.8.zip')
+            .input-group-btn
+                button.btn.btn-default(data-bind='click: submit, enable: !ticket() && !submitting()') Go!
 
     p
-        button(class="btn btn-default btn-lg" data-bind='click: submit, visible: !ticket(), enable: !submitting()')
-            span(class='glyphicon glyphicon-asterisk')
-            span  Submit
-        span  
-        img(src='/images/loading.gif' data-bind='visible: submitting()')
+        img.loading(src='/images/loading.gif', data-bind='visible: submitting()')
 
     p
         .alert.alert-warning(data-bind='visible: isPamodsUrl()') Storing your mod archive on pamods.github.io is highly discouraged.
