@@ -33,7 +33,24 @@ $(function() {
     };
     
     model.isPamodsUrl = ko.computed(function() {
-        return model.url().indexOf('http://pamods.github.io') === 0;
+        return model.url().match(/https?:\/\/pamods.github.io\//gi);
+    });
+    
+    model.isWrongGithubUsage = ko.computed(function() {
+        var url = model.url();
+        
+        var regex = /https?:\/\/github.com\/[^/]+\/[^/]+\/([^/]+)\//gi;
+        var matches = regex.exec(url);
+        if(matches) {
+            if(matches[1] === "archive" || matches[1] === "releases") return false;
+            return true;
+        }
+        
+        if(url.match(/https?:\/\/raw.githubusercontent.com/g)) {
+            return true;
+        }
+        
+        return false;
     });
     
     var doModAction = function(action) {

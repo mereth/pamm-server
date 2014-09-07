@@ -15,7 +15,8 @@ block content
         img.loading(src='/images/loading.gif', data-bind='visible: submitting()')
 
     p
-        .alert.alert-warning(data-bind='visible: isPamodsUrl()') Storing your mod archive on pamods.github.io is highly discouraged.
+        .alert.alert-warning(data-bind='visible: isPamodsUrl()') Storing your mod zip archive on pamods.github.io is highly discouraged.
+        .alert.alert-warning(data-bind='visible: isWrongGithubUsage()') Storing your mod zip archive inside your repository is an inappropriate way to use git. Use github <em>archive (Download ZIP)</em> or <em><a href='https://github.com/blog/1547-release-your-software' target='_blank'>release</a></em> mechanism instead.
         .alert.alert-danger(data-bind='text: error, visible: error()')
 
     div(data-bind='foreach: mods')
