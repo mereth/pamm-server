@@ -188,8 +188,25 @@ var checkorg = function(req, done) {
 };
 
 var download = function(url, done) {
+    var killed = false;
     request({url: url, encoding: null}, function (error, response, body) {
+        if(killed) return;
         done(error, body);
+    })
+    .on('response', function(res) {
+        var contentType = res.headers['content-type'];
+        if(contentType !== 'application/zip') {
+            killed = true;
+            res.destroy();
+            done(new Error('Your mod must be packaged as a zip archive. Unsupported content type: ' + contentType));
+        }
+        
+        var totalSize = Number(res.headers['content-length']);
+        if(totalSize > 10485760) { // 1024 * 1024 * 10 = 10MiB
+            killed = true;
+            res.destroy();
+            done(new Error('Sorry, maximum mod size is currently 10MiB, please contact a PAMM administrator.'));
+        }
     });
 };
 
