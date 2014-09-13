@@ -4,12 +4,12 @@ block content
     h1= title
     
     p
-        .input-group
+        .input-group#modurl
             .input-group-addon
                 span(class='glyphicon glyphicon-globe')
             input(class='form-control', data-bind='value: url, attr: { readonly: ticket() }' placeholder='eg.: https://github.com/username/mymod/archive/v1.8.zip')
             .input-group-btn
-                button.btn.btn-default(data-bind='click: submit, enable: !ticket() && !submitting()') Go!
+                button.btn.btn-default(data-bind='click: (!ticket() ? submit : clear), enable: !submitting(), text: (!ticket() ? "Go!" : "Clear") ')
 
     p
         img.loading(src='/images/loading.gif', data-bind='visible: submitting()')

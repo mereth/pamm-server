@@ -9,6 +9,9 @@ $(function() {
         submitting: ko.observable(false),
         submit: function() {
             var self = this;
+            
+            if(self.ticket() || self.submitting()) return;
+            
             self.error('');
             self.submitting(true);
             $.post('/api/mod', { modurl: model.url() }, function(data) {
@@ -29,6 +32,12 @@ $(function() {
             .always(function() {
                 self.submitting(false);
             });;
+        },
+        clear: function() {
+            this.url('');
+            this.error('');
+            this.mods.removeAll();
+            this.ticket(null);
         }
     };
     
@@ -95,6 +104,12 @@ $(function() {
             model.mods.push(mod);
         }
     };
+    
+    $("#modurl").on("keyup", "input", function(e) {
+        if (e.which === 13 && !model.ticket()) {
+            $("#modurl button").trigger('click');
+        }
+    });
     
     ko.applyBindings(model);
 });
