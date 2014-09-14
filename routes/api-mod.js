@@ -309,7 +309,7 @@ var disable = function(req, modinfo, done) {
         mod.enabled = false;
         db.collection('mods').save(mod, function(err) {
             if(err) return done(err);
-            registerEvent(modinfo, 'mod-disable');
+            registerEvent(mod, 'mod-disable');
             modinfo.status = "disabled";
             done();
         });
@@ -324,7 +324,7 @@ var enable = function(req, modinfo, done) {
         delete mod.enabled;
         db.collection('mods').save(mod, function(err) {
             if(err) return done(err);
-            registerEvent(modinfo, 'mod-enable');
+            registerEvent(mod, 'mod-enable');
             modinfo.status = "published";
             done();
         });
