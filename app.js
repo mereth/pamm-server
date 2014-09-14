@@ -15,9 +15,10 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
 var routes = require('./routes/index');
-var users = require('./routes/users');
+var apiEvent = require('./routes/api-event');
 var apiMod = require('./routes/api-mod');
 var apiUsage = require('./routes/api-usage');
+var apiUser = require('./routes/api-user');
 
 var serverip = (process.env.OPENSHIFT_NODEJS_IP || "127.0.0.1");
 var serverport = (process.env.OPENSHIFT_NODEJS_PORT || 8080);
@@ -98,6 +99,7 @@ var start = function() {
             _id: profile.id,
             displayName: (profile.displayName || profile.username),
             username: profile.username,
+            lastLogin: new Date(),
             accessToken: accessToken
         };
         database.collection('users').save(user, function(err) {
@@ -117,9 +119,10 @@ var start = function() {
     
     
     app.use('/', routes);
-    app.use('/users', users);
+    app.use('/api/event', apiEvent);
     app.use('/api/mod', apiMod);
     app.use('/api/usage', apiUsage);
+    app.use('/api/user', apiUser);
     
     // catch 404 and forward to error handler
     app.use(function(req, res, next) {
