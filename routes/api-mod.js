@@ -195,10 +195,11 @@ var download = function(url, done) {
     })
     .on('response', function(res) {
         var contentType = res.headers['content-type'];
-        if(contentType !== 'application/zip') {
+        if(contentType !== 'application/zip' && contentType !== 'application/x-zip-compressed') {
             killed = true;
             res.destroy();
             done(new Error('Your mod must be packaged as a zip archive. Unsupported content type: ' + contentType));
+            return;
         }
         
         var totalSize = Number(res.headers['content-length']);
@@ -206,6 +207,7 @@ var download = function(url, done) {
             killed = true;
             res.destroy();
             done(new Error('Sorry, maximum mod size is currently 10MiB, please contact a PAMM administrator.'));
+            return;
         }
     });
 };
