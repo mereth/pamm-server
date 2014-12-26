@@ -195,7 +195,7 @@ var download = function(url, done) {
     })
     .on('response', function(res) {
         var contentType = res.headers['content-type'];
-        if(contentType !== 'application/zip' && contentType !== 'application/x-zip-compressed') {
+        if(contentType !== 'application/zip' && contentType !== 'application/x-zip-compressed' && contentType !== 'application/octet-stream') {
             killed = true;
             res.destroy();
             done(new Error('Your mod must be packaged as a zip archive. Unsupported content type: ' + contentType));
