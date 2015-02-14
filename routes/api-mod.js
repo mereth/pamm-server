@@ -163,7 +163,7 @@ var checkorg = function(req, done) {
     var session = req.session;
     
     var options = {
-        url: 'https://api.github.com/users/' + user.username + '/orgs',
+        url: 'https://api.github.com/user/orgs',
         headers: {
             'User-Agent': 'PAMM-SERVER',
             'Authorization': 'token ' + user.accessToken
