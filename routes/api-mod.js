@@ -316,7 +316,6 @@ var disable = function(req, modinfo, done) {
     var identifier = modinfo.identifier;
     db.collection('mods').findOne({_id: identifier}, function(err, mod) {
         if(err) return done(err);
-        mod.owner = req.user._id;
         mod.enabled = false;
         db.collection('mods').save(mod, function(err) {
             if(err) return done(err);
@@ -332,7 +331,6 @@ var enable = function(req, modinfo, done) {
     var identifier = modinfo.identifier;
     db.collection('mods').findOne({_id: identifier}, function(err, mod) {
         if(err) return done(err);
-        mod.owner = req.user._id;
         delete mod.enabled;
         db.collection('mods').save(mod, function(err) {
             if(err) return done(err);
