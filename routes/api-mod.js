@@ -34,8 +34,16 @@ var properties = [
     'url'
 ];
 
+var cache = null; // absolutely not cluster safe cache
+
 router.get('/', function(req, res) {
     db = req.database;
+    
+    if(cache) {
+        res.send(cache);
+        return;
+    }
+    
     db.collection('mods').find({enabled: { $ne: false }}).toArray(function(err, mods) {
         if(err) throw err;
         _.forEach(mods, function(mod) {
@@ -43,9 +51,9 @@ router.get('/', function(req, res) {
             delete mod.owner;
         });
         
-        mods = _.sortBy(mods, ['context', 'identifier']);
+        cache = _.sortBy(mods, ['context', 'identifier']);
         
-        res.send(mods);
+        res.send(cache);
     });
 });
 
@@ -297,6 +305,7 @@ var publish = function(req, url, modinfo, done) {
     
     db.collection('mods').save(cleanModinfo, function(err) {
         if(err) return done(err);
+        cache = null;
         registerEvent(cleanModinfo, 'mod-publish');
         modinfo.status = "published";
         done();
@@ -311,6 +320,7 @@ var disable = function(req, modinfo, done) {
         mod.enabled = false;
         db.collection('mods').save(mod, function(err) {
             if(err) return done(err);
+            cache = null;
             registerEvent(mod, 'mod-disable');
             modinfo.status = "disabled";
             done();
@@ -326,6 +336,7 @@ var enable = function(req, modinfo, done) {
         delete mod.enabled;
         db.collection('mods').save(mod, function(err) {
             if(err) return done(err);
+            cache = null;
             registerEvent(mod, 'mod-enable');
             modinfo.status = "published";
             done();
